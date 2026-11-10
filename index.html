@@ -1,0 +1,915 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>질문은행 자동확장 — 면접스킬</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFFFFF; --surface:#F6F7FC; --ink:#1A1D2E; --ink-soft:#5A6078;
+  --brand:#FCE9E1; --brand-ink:#8A3517; --brand-mid:#D9572B;
+  --navy:#11308C; --violet:#643DF2; --blue:#295BF2; --lime:#C0D904; --lime-pale:#EAF2AE;
+  --line:#E2E5F0; --orig:#F6F9DC; --danger:#C62F4A; --focus:#295BF2;
+  --l1:#EAF2AE; --l1t:#11308C; --l2:#C0D904; --l2t:#11308C; --l3:#295BF2; --l3t:#fff;
+  --l4:#643DF2; --l4t:#fff; --l5:#11308C; --l5t:#fff;
+  --radius:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100vh}
+body{background:var(--bg);color:var(--ink);font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;font-size:15px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* ── 헤더 ── */
+.site-header{background:#fff;border-bottom:1px solid var(--line);padding:0 20px;height:52px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100}
+.logo{font-size:13px;font-weight:900;color:var(--brand-ink);letter-spacing:.06em}
+.logo-sep{width:1px;height:20px;background:var(--line)}
+.page-title{font-size:14px;font-weight:700;color:var(--ink);flex:1}
+.header-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--brand);color:var(--brand-ink)}
+
+/* ── 레이아웃 ── */
+.wrap{max-width:1320px;margin:0 auto;padding:24px 20px 60px}
+.grid{display:grid;grid-template-columns:380px minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+
+/* ── 패널 ── */
+.panel{background:var(--surface);border-radius:var(--radius);padding:18px;position:sticky;top:64px}
+@media (max-width:900px){.panel{position:static}}
+.step{padding:14px 0;border-top:1px solid var(--line)}
+.step:first-child{border-top:0;padding-top:0}
+.step h2{font-size:14px;margin:0 0 10px;color:var(--navy);display:flex;gap:8px;align-items:center;font-weight:700}
+.step h2 .n{width:22px;height:22px;border-radius:50%;background:var(--brand-mid);color:#fff;font-size:11px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;flex:none}
+textarea{width:100%;min-height:200px;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);font-size:14px;line-height:1.55}
+.hint{font-size:13px;color:var(--ink-soft);margin-top:6px}
+.hint b{color:var(--blue)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input[type=text],select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);min-width:0}
+input[type=text]{flex:1}
+select{width:100%}
+label.lbl{font-size:13px;color:var(--ink-soft);display:block;margin-bottom:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--brand-mid);color:var(--brand-ink);background:var(--bg);border-radius:999px;padding:3px 6px 3px 12px;font-size:13px;font-weight:700}
+.chip button{border:0;background:transparent;cursor:pointer;color:inherit;width:22px;height:22px;border-radius:50%;line-height:1}
+.chip button:hover{background:var(--brand)}
+.sugg{border:1px dashed var(--line);background:transparent;border-radius:999px;padding:3px 12px;font-size:13px;cursor:pointer;color:var(--ink-soft)}
+.sugg:hover{border-color:var(--brand-mid);color:var(--brand-ink)}
+.btn{border:0;border-radius:10px;padding:9px 14px;cursor:pointer;font-weight:700;font-family:inherit}
+.btn.ghost{background:var(--bg);border:1px solid var(--line);color:var(--navy)}
+.btn.ghost:hover{border-color:var(--navy)}
+.btn.main{width:100%;background:var(--brand-mid);color:#fff;font-size:15px;padding:13px;margin-top:6px;border-radius:10px}
+.btn.main:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.stop{background:var(--bg);border:1px solid var(--danger);color:var(--danger)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn.gen{width:100%;background:var(--blue);color:#fff;padding:11px;margin-top:8px}
+.btn.danger{color:var(--danger);border-color:var(--danger)}
+
+/* ── 난이도 계단 ── */
+.stairs{display:flex;align-items:flex-end;gap:6px;height:96px}
+.stair{flex:1;border:2px solid var(--line);border-radius:8px 8px 4px 4px;background:var(--bg);cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:4px 2px 6px;font-weight:800;font-size:14px;color:var(--ink-soft);transition:background .15s,border-color .15s}
+.stair small{font-weight:400;font-size:10px;line-height:1.3;text-align:center}
+.stair[data-l="1"]{height:40%}.stair[data-l="2"]{height:55%}.stair[data-l="3"]{height:70%}.stair[data-l="4"]{height:85%}.stair[data-l="5"]{height:100%}
+.stair.on[data-l="1"]{background:var(--l1);color:var(--l1t);border-color:var(--l2)}
+.stair.on[data-l="2"]{background:var(--l2);color:var(--l2t);border-color:var(--l2)}
+.stair.on[data-l="3"]{background:var(--l3);color:var(--l3t);border-color:var(--l3)}
+.stair.on[data-l="4"]{background:var(--l4);color:var(--l4t);border-color:var(--l4)}
+.stair.on[data-l="5"]{background:var(--l5);color:var(--l5t);border-color:var(--l5)}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
+.checks label{display:flex;gap:6px;align-items:center;font-size:14px;cursor:pointer}
+.checks input{accent-color:var(--brand-mid);width:16px;height:16px}
+
+/* ── 보관함 ── */
+.vault{background:var(--bg);border:2px solid var(--brand-mid);border-radius:var(--radius);padding:12px 14px;margin-bottom:16px}
+.vault h2{font-size:14px;margin:0 0 8px;color:var(--brand-ink);font-weight:700}
+.vault .row+.row{margin-top:8px}
+.vault select{flex:1;width:auto}
+
+/* ── 세그먼트 ── */
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:10px;background:var(--bg)}
+.seg button{flex:1;border:0;background:transparent;padding:8px 6px;cursor:pointer;font-weight:700;color:var(--ink-soft);font-size:14px}
+.seg button.on{background:var(--brand-mid);color:#fff}
+
+/* ── 결과 영역 ── */
+.results{min-width:0}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);overflow-x:auto}
+.tab{border:0;background:transparent;padding:10px 16px;cursor:pointer;font-weight:700;color:var(--ink-soft);border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;font-family:inherit}
+.tab.on{color:var(--brand-ink);border-bottom-color:var(--brand-mid)}
+.tab .cnt{font-size:12px;font-weight:400;margin-left:4px}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0}
+.toolbar .note{font-size:13px;color:var(--ink-soft)}
+.banner{background:var(--brand);border-left:5px solid var(--brand-mid);padding:10px 14px;border-radius:6px;font-size:14px;margin:14px 0 0;color:var(--brand-ink)}
+.banner.err{background:transparent;border-left-color:var(--danger);border:1px solid var(--danger);border-left-width:5px;color:var(--ink)}
+.banner.info{background:transparent;border:1px solid var(--blue);border-left:5px solid var(--blue);color:var(--ink)}
+.progress{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.progress ol{margin:0;padding-left:20px;font-size:14px}
+.progress li{margin:2px 0}
+.progress .st{font-size:12px;margin-left:6px;padding:1px 8px;border-radius:999px}
+.st.wait{color:var(--ink-soft);border:1px solid var(--line)}
+.st.run{background:var(--brand-mid);color:#fff}
+.st.done{background:var(--lime);color:#11308C}
+.st.fail{background:var(--danger);color:#fff}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--navy);color:#fff;font-weight:700;white-space:nowrap;position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+td.no{white-space:nowrap;font-weight:800;color:var(--navy);width:44px}
+td.orig{background:var(--orig);min-width:220px}
+td.q{min-width:220px}
+[contenteditable="true"]{border-radius:4px;cursor:text}
+[contenteditable="true"]:hover{box-shadow:inset 0 0 0 1px var(--line)}
+[contenteditable="true"]:focus{outline:2px solid var(--blue);background:var(--bg)}
+.lv{display:inline-block;font-size:12px;font-weight:800;padding:1px 8px;border-radius:5px}
+.lv.L1{background:var(--l1);color:var(--l1t)}.lv.L2{background:var(--l2);color:var(--l2t)}.lv.L3{background:var(--l3);color:var(--l3t)}.lv.L4{background:var(--l4);color:var(--l4t)}.lv.L5{background:var(--l5);color:var(--l5t)}
+.ladder{margin-bottom:26px}
+.ladder h3{font-size:16px;margin:0 0 10px;color:var(--navy);line-height:1.45}
+.ladder h3 span{color:var(--brand-mid);margin-right:6px}
+.rung{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;border-radius:8px;margin-bottom:6px;border:1px solid var(--line)}
+.rung .lv{flex:none;margin-top:2px}
+.rung .t{flex:1}
+.rung .tag{font-size:12px;color:var(--ink-soft);flex:none;margin-top:3px}
+.rung.o{background:var(--orig)}
+.rung[data-l="L2"]{margin-left:4%}.rung[data-l="L3"]{margin-left:8%}.rung[data-l="L4"]{margin-left:12%}.rung[data-l="L5"]{margin-left:16%}
+@media (max-width:600px){.rung{margin-left:0!important}}
+.card{border:1px solid var(--line);border-radius:12px;margin-bottom:18px;overflow:hidden}
+.card h3{margin:0;padding:12px 16px;font-size:15px;background:var(--surface);color:var(--navy);line-height:1.45}
+.card dl{margin:0;display:grid;grid-template-columns:130px 1fr}
+.card dt,.card dd{margin:0;padding:10px 16px;border-top:1px solid var(--line);font-size:14px}
+.card dt{font-weight:700;color:var(--ink-soft)}
+.card ul{margin:0;padding-left:18px}
+@media (max-width:600px){.card dl{grid-template-columns:1fr}.card dd{border-top:0;padding-top:0}}
+.sec{font-size:16px;color:var(--navy);margin:24px 0 10px;font-weight:700}
+.flow{border-left:4px solid var(--blue);padding:4px 14px;margin:14px 0;font-size:14px}
+.empty{padding:40px 20px;text-align:center;color:var(--ink-soft);border:1px dashed var(--line);border-radius:12px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:999}
+.toast.show{opacity:1}
+.thbtn{display:block;margin-top:4px;border:1px solid rgba(255,255,255,.6);background:transparent;color:inherit;border-radius:6px;font-size:12px;padding:1px 8px;cursor:pointer;font-weight:400}
+.thbtn:hover{background:rgba(255,255,255,.15)}
+.api-setup{background:var(--brand);border:1px solid var(--brand-mid);border-radius:var(--radius);padding:14px;margin-bottom:16px;font-size:14px;color:var(--brand-ink)}
+.api-setup h3{margin:0 0 8px;font-size:14px;font-weight:700}
+.api-setup input{background:#fff;border:1px solid var(--brand-mid);width:100%;border-radius:8px;padding:8px 10px;margin:6px 0;font-family:monospace;font-size:13px;color:var(--ink)}
+.api-setup .row{margin-top:8px}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <span class="logo">MOA FORMULA</span>
+  <span class="logo-sep"></span>
+  <span class="page-title">질문은행 자동확장</span>
+  <span class="header-badge">강사용</span>
+</header>
+
+<div class="wrap">
+<div class="grid">
+
+  <!-- 설정 패널 -->
+  <aside class="panel" aria-label="파생 설정">
+
+    <!-- API 키 설정 -->
+    <div class="api-setup" id="apiSetup">
+      <h3>🔑 AI 연결 설정</h3>
+      <p style="margin:0 0 6px;font-size:13px">Claude API 키를 입력하면 질문 파생 기능이 켜집니다. 키는 이 기기에만 저장됩니다.</p>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-…" autocomplete="off">
+      <div class="row">
+        <button class="btn ghost sm" id="saveKeyBtn">저장하고 연결</button>
+        <button class="btn ghost sm" id="clearKeyBtn" style="display:none">키 삭제</button>
+      </div>
+      <p class="hint" id="apiStatus">키가 없어요. <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>에서 발급해 주세요.</p>
+    </div>
+
+    <!-- 보관함 -->
+    <div class="vault" id="vault">
+      <h2>📂 내 질문 세트 보관함</h2>
+      <div id="vaultBody"><div class="hint">보관함 여는 중…</div></div>
+    </div>
+
+    <!-- 1. 질문 세트 -->
+    <section class="step">
+      <h2><span class="n">1</span>질문 세트</h2>
+      <div class="seg" role="tablist">
+        <button id="segPaste" class="on" role="tab" aria-selected="true">기존 세트 붙여넣기</button>
+        <button id="segGen" role="tab" aria-selected="false">직무로 새로 만들기</button>
+      </div>
+      <div id="pastePane">
+        <textarea id="seed" aria-label="질문 세트, 한 줄에 하나"></textarea>
+        <div class="hint" id="parsed"></div>
+      </div>
+      <div id="genPane" hidden>
+        <label class="lbl" for="genJob">직무</label>
+        <input type="text" id="genJob" placeholder="예: 물리치료사" style="width:100%">
+        <label class="lbl" for="genN" style="margin-top:10px">문항 수</label>
+        <select id="genN"><option>8</option><option selected>10</option><option>12</option><option>15</option></select>
+        <label class="lbl" for="genPost" style="margin-top:10px">채용공고나 기관 정보 (선택)</label>
+        <textarea id="genPost" style="min-height:80px" placeholder="붙여넣으면 그 기관에 맞춘 질문으로 조정해요."></textarea>
+        <div class="hint">면접 대상은 4번에서 고른 값이 적용됩니다.</div>
+        <button class="btn gen" id="genBtn" disabled>세트 만들기</button>
+      </div>
+    </section>
+
+    <!-- 2. 직무 -->
+    <section class="step">
+      <h2><span class="n">2</span>직무</h2>
+      <label class="lbl" for="base">기준 직무 (질문 세트의 직무)</label>
+      <input type="text" id="base" value="사회복지사" style="width:100%">
+      <label class="lbl" for="addJob" style="margin-top:12px">파생할 인접 직무</label>
+      <div class="chips" id="jobChips"></div>
+      <div class="row">
+        <input type="text" id="addJob" placeholder="직무 입력 후 Enter">
+        <button class="btn ghost" id="addJobBtn">추가</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn ghost" id="suggBtn" hidden>인접 직무 추천받기</button>
+      </div>
+      <div class="chips" id="suggChips"></div>
+    </section>
+
+    <!-- 3. 난이도 -->
+    <section class="step">
+      <h2><span class="n">3</span>난이도</h2>
+      <div class="stairs" id="stairs" role="group" aria-label="난이도 선택"></div>
+      <div class="hint">누를 때마다 켜고 끕니다.</div>
+    </section>
+
+    <!-- 4. 대상 & 구성 -->
+    <section class="step">
+      <h2><span class="n">4</span>대상과 결과 구성</h2>
+      <label class="lbl" for="aud">면접 대상</label>
+      <select id="aud">
+        <option>특성화고·고등학생</option>
+        <option selected>전문대·대학 재학생</option>
+        <option>직업훈련 과정 수강생 (경력 전환자 포함)</option>
+        <option>재직자·이직 준비자</option>
+      </select>
+      <div class="checks" style="margin-top:12px">
+        <label><input type="checkbox" id="mT" checked>직무 조옮김</label>
+        <label><input type="checkbox" id="mL" checked>난이도 사다리</label>
+        <label><input type="checkbox" id="mG" checked>강사용 해설</label>
+        <label><input type="checkbox" id="mA" checked>세트 분석·빈칸</label>
+      </div>
+      <button class="btn main" id="runBtn" disabled>파생하기</button>
+      <div class="hint" id="runHint">AI 키를 입력하면 파생 기능이 켜집니다.</div>
+    </section>
+  </aside>
+
+  <!-- 결과 -->
+  <main class="results">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div id="bannerArea"></div>
+    <div id="progressArea"></div>
+    <div class="toolbar">
+      <span class="note">질문 문장을 눌러 바로 고칠 수 있어요. 고친 내용은 복사·다운로드에 반영됩니다.</span>
+      <div class="row">
+        <button class="btn ghost" id="copyBtn">이 탭 복사</button>
+        <button class="btn ghost" id="dlBtn">전체 결과 CSV 저장</button>
+      </div>
+    </div>
+    <div id="view"></div>
+  </main>
+
+</div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ── 예시 데이터 ── */
+const SEED = [
+  "1. 1분 이내로 자기소개를 해보세요.",
+  "2. 사회복지사를 직업으로 선택한 이유는 무엇인가요?",
+  "3. 본인이 생각하는 좋은 사회복지사란 어떤 사람인가요?",
+  "4. 학교생활이나 실습 중 가장 기억에 남는 경험을 이야기해 주세요.",
+  "5. 실습이나 봉사활동 중 대상자와 의사소통이 어려웠던 경험이 있다면 어떻게 해결했나요?",
+  "6. 자신과 전혀 다른 생각이나 행동을 하는 대상자를 만나게 된다면 어떻게 대응하겠습니까?",
+  "7. 업무가 많아 힘든 상황에서 동료가 도움을 요청한다면 어떻게 하겠습니까?",
+  "8. 대상자의 개인정보를 보호하기 위해 사회복지사가 주의해야 할 점은 무엇이라고 생각하나요?",
+  "9. 사회복지 현장에서 자신의 가치관과 기관의 방침이 충돌한다면 어떻게 하겠습니까?",
+  "10. 우리 기관에 입사한다면 어떤 사회복지사가 되고 싶습니까?"
+].join("\n");
+
+const EXAMPLE = {
+  analysis:{
+    tags:[
+      {no:1,summary:"1분 자기소개",competency:"자기표현·요약력",type:"공통 도입",level:"L2"},
+      {no:2,summary:"직업 선택 이유",competency:"직업 동기",type:"가치형",level:"L3"},
+      {no:3,summary:"좋은 사회복지사란",competency:"직업관",type:"가치형",level:"L3"},
+      {no:4,summary:"가장 기억에 남는 경험",competency:"경험 성찰·자기이해",type:"경험형 (개방)",level:"L2"},
+      {no:5,summary:"의사소통 어려웠던 경험",competency:"의사소통·문제해결",type:"경험형",level:"L2"},
+      {no:6,summary:"다른 생각을 가진 대상자",competency:"수용·비심판적 태도",type:"상황판단",level:"L4"},
+      {no:7,summary:"바쁠 때 동료의 도움 요청",competency:"협업·우선순위",type:"상황판단",level:"L4"},
+      {no:8,summary:"개인정보 보호 주의점",competency:"직업윤리·지식",type:"지식형",level:"L1"},
+      {no:9,summary:"가치관과 기관 방침 충돌",competency:"윤리적 판단",type:"딜레마",level:"L5"},
+      {no:10,summary:"입사 후 되고 싶은 모습",competency:"조직 적합·비전",type:"포부형",level:"L3"}
+    ],
+    flow:"동기 → 직업관 → 경험 → 상황판단 → 윤리 → 포부로 이어져 실제 면접 순서와 거의 같습니다.",
+    overlaps:["4번과 5번이 연달아 경험형이라 같은 에피소드를 두 번 쓸 위험이 있어요."],
+    gaps:[
+      {area:"자기관리",why:"소진·스트레스 관리는 사회복지 현장 면접에서 자주 나오는 영역이에요.",level:"L3",question:"대상자의 어려운 이야기를 계속 듣다 보면 정서적으로 지칠 수 있습니다. 본인만의 회복 방법이 있나요?"},
+      {area:"약점·실패",why:"실수를 대하는 태도로 성장 가능성을 봅니다.",level:"L3",question:"실습 중 실수했거나 아쉬웠던 순간이 있다면, 그 뒤로 무엇을 바꾸었나요?"}
+    ]
+  },
+  transpose:{rows:[
+    {no:4,items:[
+      {job:"직업상담사",q:"교육 과정이나 이전 직장 생활 중 가장 기억에 남는 경험을 이야기해 주세요."},
+      {job:"청소년지도사",q:"청소년 활동이나 캠프, 봉사 중 가장 기억에 남는 순간은 무엇인가요?"},
+      {job:"보육교사",q:"보육 실습 중 아이들과 함께하며 가장 기억에 남는 장면을 이야기해 주세요."}
+    ]},
+    {no:9,items:[
+      {job:"직업상담사",q:"기관의 취업 실적 목표와 내담자에게 정말 맞는 진로 방향이 다를 때, 어떻게 하시겠습니까?"},
+      {job:"청소년지도사",q:"청소년이 비밀을 지켜달라며 위험한 상황을 털어놓는다면, 비밀 유지와 보호 의무 사이에서 어떻게 하시겠습니까?"},
+      {job:"보육교사",q:"학부모의 개별 요청이 원의 운영 방침과 맞지 않을 때, 어떻게 대응하시겠습니까?"}
+    ]}
+  ]},
+  ladder:{ladders:[
+    {no:4,levels:[
+      {level:"L1",q:"사회복지 실습에서 가장 중요하게 배워야 할 것은 무엇이라고 생각하나요?"},
+      {level:"L2",q:"학교생활이나 실습 중 가장 기억에 남는 경험을 이야기해 주세요.",orig:true},
+      {level:"L3",q:"그 경험이 왜 가장 기억에 남나요? 그 전과 후, 본인에게 달라진 점은 무엇인가요?"},
+      {level:"L4",q:"그 경험에서 배운 점을 우리 기관 현장에서는 어떻게 적용할 수 있을까요?"},
+      {level:"L5",q:"말씀하신 경험은 다른 지원자들도 흔히 하는 경험인데, 본인 경험만의 차별점은 무엇인가요?"}
+    ]}
+  ]},
+  guide:{cards:[
+    {no:4,intent:"경험에서 의미를 찾아내는 성찰력, 지원자의 관심사와 가치관 확인",key:"① 짧은 상황 설명 → ② 그때 느낀 감정·생각 → ③ 그 뒤 달라진 점 → ④ 직무와 연결",mistake:"활동을 나열하거나 결과·성과만 강조하고, 본인의 배움과 변화가 빠지는 경우",followups:["그때 다른 선택을 했다면 어땠을까요?","그 경험이 사회복지사를 선택하는 데 영향을 주었나요?","비슷한 상황이 다시 온다면 무엇을 다르게 하겠어요?"]}
+  ]}
+};
+
+/* ── 상태 ── */
+const state = {
+  jobs:["직업상담사","청소년지도사","보육교사"],
+  levels:new Set(["L1","L2","L3","L4","L5"]),
+  results:JSON.parse(JSON.stringify(EXAMPLE)),
+  resultJobs:["직업상담사","청소년지도사","보육교사"],
+  resultBase:"사회복지사",
+  resultQuestions:null,
+  isExample:true,
+  tab:"transpose",
+  running:false,
+  ctl:null,
+  stopAll:false,
+  notice:"",
+  error:"",
+  currentId:null,
+  currentName:"",
+  saveName:"사회복지사 기본",
+  selId:"",
+  delArm:null,
+  sets:[]
+};
+const LEVEL_NAMES={L1:"인식 확인",L2:"경험 서술",L3:"이유·성장",L4:"상황 판단",L5:"딜레마·압박"};
+const TABS=[["transpose","직무 조옮김"],["ladder","난이도 사다리"],["guide","강사용 해설"],["analysis","세트 분석·빈칸"]];
+
+const $=id=>document.getElementById(id);
+function h(tag,attrs,...kids){
+  const el=document.createElement(tag);
+  if(attrs) for(const k in attrs){
+    const v=attrs[k]; if(v==null||v===false) continue;
+    if(k==="class") el.className=v;
+    else if(k.startsWith("on")) el.addEventListener(k.slice(2),v);
+    else el.setAttribute(k,v===true?"":v);
+  }
+  for(const c of kids.flat()){
+    if(c==null||c===false) continue;
+    el.append(c instanceof Node?c:document.createTextNode(String(c)));
+  }
+  return el;
+}
+function editable(obj,key,cls){
+  const el=h("div",{class:cls||"",contenteditable:"true",spellcheck:"false"},obj[key]||"");
+  el.addEventListener("input",()=>{obj[key]=el.textContent;});
+  return el;
+}
+function toast(msg){
+  const t=$("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2400);
+}
+
+/* ── API ── */
+let apiKey="";
+function loadKey(){
+  try{ apiKey=localStorage.getItem("moa_qbank_api_key")||""; }catch(e){ apiKey=""; }
+}
+function saveKey(k){ apiKey=k; try{ localStorage.setItem("moa_qbank_api_key",k); }catch(e){} }
+function clearKey(){ apiKey=""; try{ localStorage.removeItem("moa_qbank_api_key"); }catch(e){} }
+
+function updateApiUI(){
+  const hasKey=!!apiKey;
+  $("apiKeyInput").value=hasKey?"●●●●●●●●●●●●●●●●":"";
+  $("clearKeyBtn").style.display=hasKey?"":"none";
+  $("apiStatus").textContent=hasKey?"✅ API 키가 연결되어 있어요. 파생하기 버튼을 눌러 주세요.":"키가 없어요. console.anthropic.com에서 발급해 주세요.";
+  $("runBtn").disabled=!hasKey;
+  $("genBtn").disabled=!hasKey;
+  $("suggBtn").hidden=!hasKey;
+  if(hasKey) $("runHint").textContent="처음 파생 시 10~30초가 걸릴 수 있어요.";
+  else $("runHint").textContent="API 키를 입력하면 파생 기능이 켜집니다.";
+}
+
+async function callClaude(prompt){
+  const signal=state.ctl?.signal;
+  const res=await fetch("/api/chat",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":apiKey},
+    body:JSON.stringify({prompt}),
+    signal
+  });
+  if(!res.ok){
+    const err=await res.json().catch(()=>({}));
+    if(res.status===401||res.status===403) throw {code:"invalid_key"};
+    if(res.status===429) throw {code:"rate_limited"};
+    throw {code:"api_error",message:err?.error||"API 오류"};
+  }
+  const data=await res.json();
+  const text=data.text||"";
+  const m=text.match(/```(?:json)?\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+  if(!m) throw {code:"invalid_json"};
+  try{ return JSON.parse(m[1]||m[0]); }catch(e){ throw {code:"invalid_json"}; }
+}
+
+/* ── 질문 파싱 ── */
+function parseSeed(){
+  const out=[];
+  $("seed").value.split(/\r?\n/).forEach(raw=>{
+    let s=raw.replace(/\*\*/g,"").trim();
+    if(!s||/^[\s|:\-]+$/.test(s)) return;
+    s=s.replace(/^\|/,"").replace(/\|\s*$/,"").trim();
+    let m=s.match(/^(\d+)\s*[.)\]|:]?\s+(.+)$/)||s.match(/^(\d+)\s*[.)\]|:]\s*(.+)$/);
+    let no,text;
+    if(m){no=+m[1];text=m[2];}else{no=out.length?out[out.length-1].no+1:1;text=s;}
+    text=text.replace(/\|/g," ").replace(/\s+/g," ").trim();
+    if(text.length<4) return;
+    out.push({no,text});
+  });
+  return out;
+}
+function showParsed(){
+  const q=parseSeed();
+  $("parsed").innerHTML="";
+  $("parsed").append("질문 ",h("b",null,q.length+"개")," 인식됨. 한 줄에 질문 하나씩, 번호는 있어도 없어도 됩니다.");
+}
+
+/* ── 설정 UI ── */
+function renderJobs(){
+  const box=$("jobChips"); box.innerHTML="";
+  if(!state.jobs.length) box.append(h("span",{class:"hint"},"아직 없어요. 아래에서 추가해 주세요."));
+  state.jobs.forEach((j,i)=>{
+    box.append(h("span",{class:"chip"},j,
+      h("button",{"aria-label":j+" 삭제",onclick:()=>{state.jobs.splice(i,1);renderJobs();}},"×")));
+  });
+}
+function addJob(name){
+  name=(name||"").trim();
+  if(!name||state.jobs.includes(name)) return;
+  if(state.jobs.length>=6){toast("인접 직무는 6개까지 넣을 수 있어요.");return;}
+  state.jobs.push(name); renderJobs();
+}
+function renderStairs(){
+  const box=$("stairs"); box.innerHTML="";
+  ["L1","L2","L3","L4","L5"].forEach((l,i)=>{
+    const on=state.levels.has(l);
+    box.append(h("button",{class:"stair"+(on?" on":""),"data-l":String(i+1),"aria-pressed":on?"true":"false",
+      onclick:()=>{on?state.levels.delete(l):state.levels.add(l);renderStairs();}},
+      l,h("small",null,LEVEL_NAMES[l])));
+  });
+}
+
+/* ── 결과 렌더 ── */
+function qText(no){
+  const list=state.resultQuestions||parseSeed();
+  const f=list.find(q=>q.no===no);
+  return f?f.text:"";
+}
+function counts(){
+  const r=state.results;
+  return{
+    transpose:(r.transpose?.rows||[]).reduce((a,x)=>a+(x.items||[]).length,0),
+    ladder:(r.ladder?.ladders||[]).reduce((a,x)=>a+(x.levels||[]).filter(l=>!l.orig).length,0),
+    guide:(r.guide?.cards||[]).length,
+    analysis:(r.analysis?.gaps||[]).length
+  };
+}
+function renderTabs(){
+  const c=counts(),box=$("tabs"); box.innerHTML="";
+  TABS.forEach(([k,label])=>{
+    box.append(h("button",{class:"tab"+(state.tab===k?" on":""),role:"tab","aria-selected":state.tab===k?"true":"false",
+      onclick:()=>{state.tab=k;render();}},label,c[k]?h("span",{class:"cnt"},"("+c[k]+")"):null));
+  });
+}
+function renderBanner(){
+  const a=$("bannerArea"); a.innerHTML="";
+  if(state.notice) a.append(h("div",{class:"banner info"},state.notice));
+  else if(state.isExample) a.append(h("div",{class:"banner"},"보내주신 사회복지사 세트로 만든 예시 결과예요. 설정을 바꾸고 [파생하기]를 누르면 새로 만듭니다."));
+  if(state.error) a.append(h("div",{class:"banner err",role:"alert"},state.error));
+}
+function emptyView(msg){return h("div",{class:"empty"},msg);}
+
+function viewTranspose(){
+  const rows=state.results.transpose?.rows||[];
+  if(!rows.length) return emptyView("직무 조옮김 결과가 아직 없어요. 왼쪽에서 [파생하기]를 눌러 주세요.");
+  const jobs=state.resultJobs;
+  const head=h("tr",null,h("th",null,"No"),h("th",null,"원본 ("+state.resultBase+")"),
+    jobs.map(j=>h("th",null,j,h("button",{class:"thbtn",onclick:()=>jobToSet(j)},"이 직무로 새 세트"))));
+  const body=rows.slice().sort((a,b)=>a.no-b.no).map(r=>h("tr",null,
+    h("td",{class:"no"},"Q"+r.no),
+    h("td",{class:"orig"},qText(r.no)),
+    jobs.map(j=>{const it=(r.items||[]).find(x=>x.job===j);return h("td",{class:"q"},it?editable(it,"q"):"—");})));
+  return h("div",{class:"tablewrap"},h("table",null,h("thead",null,head),h("tbody",null,body)));
+}
+function viewLadder(){
+  const L=state.results.ladder?.ladders||[];
+  if(!L.length) return emptyView("난이도 사다리 결과가 아직 없어요. 왼쪽에서 [파생하기]를 눌러 주세요.");
+  return h("div",null,L.slice().sort((a,b)=>a.no-b.no).map(ld=>{
+    const lv=(ld.levels||[]).slice().sort((a,b)=>a.level.localeCompare(b.level));
+    return h("section",{class:"ladder"},
+      h("h3",null,h("span",null,"Q"+ld.no),qText(ld.no)),
+      lv.map(x=>h("div",{class:"rung"+(x.orig?" o":""),"data-l":x.level},
+        h("span",{class:"lv "+x.level},x.level),editable(x,"q","t"),h("span",{class:"tag"},x.orig?"원본":LEVEL_NAMES[x.level]||""))));
+  }));
+}
+function viewGuide(){
+  const C=state.results.guide?.cards||[];
+  if(!C.length) return emptyView("강사용 해설이 아직 없어요. 왼쪽에서 [파생하기]를 눌러 주세요.");
+  return h("div",null,C.slice().sort((a,b)=>a.no-b.no).map(c=>{
+    const fu=(c.followups||[]);
+    return h("article",{class:"card"},
+      h("h3",null,"Q"+c.no+". "+qText(c.no)),
+      h("dl",null,
+        h("dt",null,"🎯 출제 의도"),h("dd",null,editable(c,"intent")),
+        h("dt",null,"✅ 좋은 답변의 핵심"),h("dd",null,editable(c,"key")),
+        h("dt",null,"⚠️ 흔한 실수"),h("dd",null,editable(c,"mistake")),
+        h("dt",null,"🔁 꼬리질문"),h("dd",null,h("ul",null,fu.map((f,i)=>{
+          const o={v:f};const li=h("li",null,editable(o,"v"));
+          li.firstChild.addEventListener("input",()=>{fu[i]=o.v;});return li;})))));
+  }));
+}
+function viewAnalysis(){
+  const A=state.results.analysis;
+  if(!A||(A.tags||[]).length===0) return emptyView("세트 분석 결과가 아직 없어요. 왼쪽에서 [파생하기]를 눌러 주세요.");
+  const out=h("div",null);
+  out.append(h("h3",{class:"sec"},"질문 DNA 태깅"));
+  out.append(h("div",{class:"tablewrap"},h("table",null,
+    h("thead",null,h("tr",null,["No","질문 요약","핵심 역량","형식","난이도"].map(t=>h("th",null,t)))),
+    h("tbody",null,(A.tags||[]).slice().sort((a,b)=>a.no-b.no).map(t=>h("tr",null,
+      h("td",{class:"no"},"Q"+t.no),h("td",null,t.summary),h("td",null,t.competency),h("td",null,t.type),
+      h("td",null,h("span",{class:"lv "+(t.level||"")},t.level))))))));
+  if(A.flow) out.append(h("p",{class:"flow"},A.flow));
+  (A.overlaps||[]).forEach(o=>out.append(h("p",{class:"flow",style:"border-left-color:var(--violet)"},o)));
+  if((A.gaps||[]).length){
+    out.append(h("h3",{class:"sec"},"빈칸 채우기 질문"));
+    out.append(h("div",{class:"tablewrap"},h("table",null,
+      h("thead",null,h("tr",null,["빈칸","왜 중요한가","난이도","생성 질문"].map(t=>h("th",null,t)))),
+      h("tbody",null,A.gaps.map(g=>h("tr",null,
+        h("td",{style:"font-weight:700;white-space:nowrap"},g.area),h("td",null,g.why),
+        h("td",null,h("span",{class:"lv "+(g.level||"")},g.level)),h("td",{class:"q"},editable(g,"question"))))))));
+  }
+  return out;
+}
+function render(){renderTabs();renderBanner();const v=$("view");v.innerHTML="";v.append({transpose:viewTranspose,ladder:viewLadder,guide:viewGuide,analysis:viewAnalysis}[state.tab]());}
+
+/* ── 복사·CSV ── */
+function tabText(k){
+  const r=state.results,L=[];
+  if(k==="transpose"){
+    (r.transpose?.rows||[]).slice().sort((a,b)=>a.no-b.no).forEach(row=>{
+      L.push("Q"+row.no+" 원본("+state.resultBase+"): "+qText(row.no));
+      (row.items||[]).forEach(it=>L.push("  - "+it.job+": "+it.q));L.push("");
+    });
+  }else if(k==="ladder"){
+    (r.ladder?.ladders||[]).slice().sort((a,b)=>a.no-b.no).forEach(ld=>{
+      L.push("Q"+ld.no+". "+qText(ld.no));
+      (ld.levels||[]).slice().sort((a,b)=>a.level.localeCompare(b.level)).forEach(x=>L.push("  "+x.level+" "+(x.orig?"(원본)":LEVEL_NAMES[x.level])+": "+x.q));L.push("");
+    });
+  }else if(k==="guide"){
+    (r.guide?.cards||[]).slice().sort((a,b)=>a.no-b.no).forEach(c=>{
+      L.push("Q"+c.no+". "+qText(c.no),"  출제 의도: "+c.intent,"  좋은 답변의 핵심: "+c.key,"  흔한 실수: "+c.mistake,"  꼬리질문: "+(c.followups||[]).join(" / "),"");
+    });
+  }else{
+    const A=r.analysis||{};
+    (A.tags||[]).forEach(t=>L.push("Q"+t.no+" | "+t.summary+" | "+t.competency+" | "+t.type+" | "+t.level));
+    if(A.flow) L.push("",A.flow);
+    (A.overlaps||[]).forEach(o=>L.push(o));
+    if((A.gaps||[]).length){L.push("","[빈칸 채우기]");A.gaps.forEach(g=>L.push("- "+g.area+" ("+g.level+"): "+g.question));}
+  }
+  return L.join("\n").trim();
+}
+async function copyText(t){
+  try{await navigator.clipboard.writeText(t);return true;}catch(e){}
+  try{const ta=h("textarea",{style:"position:fixed;opacity:0"});ta.value=t;document.body.append(ta);ta.select();const ok=document.execCommand("copy");ta.remove();return ok;}catch(e){return false;}
+}
+function csv(){
+  const esc=s=>'"'+String(s??"").replace(/"/g,'""')+'"';
+  const rows=[["구분","원본번호","원본질문","직무/레벨","파생 내용"]];
+  const r=state.results;
+  (r.transpose?.rows||[]).forEach(row=>(row.items||[]).forEach(it=>rows.push(["직무 조옮김","Q"+row.no,qText(row.no),it.job,it.q])));
+  (r.ladder?.ladders||[]).forEach(ld=>(ld.levels||[]).forEach(x=>rows.push(["난이도 사다리","Q"+ld.no,qText(ld.no),x.level+(x.orig?" (원본)":""),x.q])));
+  (r.guide?.cards||[]).forEach(c=>{
+    rows.push(["강사용 해설","Q"+c.no,qText(c.no),"출제 의도",c.intent]);
+    rows.push(["강사용 해설","Q"+c.no,qText(c.no),"좋은 답변의 핵심",c.key]);
+    rows.push(["강사용 해설","Q"+c.no,qText(c.no),"흔한 실수",c.mistake]);
+    (c.followups||[]).forEach(f=>rows.push(["강사용 해설","Q"+c.no,qText(c.no),"꼬리질문",f]));
+  });
+  (r.analysis?.gaps||[]).forEach(g=>rows.push(["빈칸 채우기","-","",g.area+" "+g.level,g.question]));
+  return "﻿"+rows.map(r=>r.map(esc).join(",")).join("\r\n");
+}
+function downloadCSV(){
+  const data=csv();
+  const blob=new Blob([data],{type:"text/csv;charset=utf-8"});
+  const a=h("a",{href:URL.createObjectURL(blob),download:"질문은행_"+(state.resultBase||"결과")+".csv",style:"display:none"});
+  document.body.append(a); a.click(); a.remove();
+  toast("CSV 파일을 저장했어요.");
+}
+
+/* ── 프롬프트 상수 ── */
+const RULES=`당신은 취업면접 코칭 강사를 돕는 면접 질문 설계 전문가입니다.
+규칙:
+- 모든 질문은 실제 면접관이 말하는 자연스러운 존댓말, 한두 문장.
+- 경험을 묻는 질문은 성과·스펙 자랑이 아니라 그 경험 속에서 느끼고 배우고 변화한 점을 끌어내도록 만든다.
+- 면접 대상의 수준에 맞는 어휘를 쓴다.
+- 난이도 정의: L1 인식 확인(생각·지식), L2 경험 서술, L3 이유·성장(왜 그랬나, 무엇이 달라졌나), L4 상황 판단(가상의 현장 상황 대응), L5 딜레마·압박(가치 충돌, 반박, 곤란한 상황).
+- 특정 기관명이나 사람 이름을 지어내지 않는다.
+- 요청한 JSON만 출력한다. 반드시 JSON 코드블록으로 감싸서 출력한다.`;
+function ctx(){return "기준 직무: "+$("base").value.trim()+"\n면접 대상: "+$("aud").value+"\n";}
+function listText(qs){return qs.map(q=>q.no+". "+q.text).join("\n");}
+function chunk(a,n){const o=[];for(let i=0;i<a.length;i+=n) o.push(a.slice(i,i+n));return o;}
+
+const ERR={
+  invalid_key:"API 키가 올바르지 않아요. 위 설정에서 키를 다시 확인해 주세요.",
+  rate_limited:"요청이 몰렸어요. 1분쯤 뒤에 다시 눌러 주세요.",
+  invalid_json:"결과 형식이 깨져서 이 단계를 건너뛰었어요. 다시 누르면 새로 시도합니다.",
+  api_error:"API 오류가 발생했어요. 잠시 뒤 다시 눌러 주세요."
+};
+const FATAL=new Set(["invalid_key"]);
+
+function emptyResults(){return{analysis:null,transpose:{rows:[]},ladder:{ladders:[]},guide:{cards:[]}};}
+
+function buildTasks(qs,base){
+  const tasks=[],jobs=state.jobs.slice(),levels=[...state.levels].sort();
+  const r=state.results;
+  if($("mA").checked) tasks.push({label:"세트 분석과 빈칸 찾기",run:async()=>{
+    const d=await callClaude(`${RULES}\n\n${ctx()}\n작업: 아래 질문 세트 전체를 분석하세요.
+- tags: 질문마다 no, summary(15자 내외), competency(핵심 역량), type(공통 도입/가치형/경험형/상황판단/지식형/딜레마/포부형 등), level(L1~L5)
+- flow: 세트 흐름에 대한 한두 문장 평
+- overlaps: 답변 에피소드가 겹칠 위험이 있는 질문 쌍과 준비 요령(없으면 빈 배열)
+- gaps: 이 직무 면접에서 비어 있는 역량·유형 3~5개. area(짧은 이름), why(왜 중요한지 한 문장), level, question(빈칸을 채우는 질문 하나)
+질문:\n${listText(qs)}\n
+JSON 형식: {"tags":[{"no":1,"summary":"","competency":"","type":"","level":"L2"}],"flow":"","overlaps":[""],"gaps":[{"area":"","why":"","level":"L3","question":""}]}`);
+    r.analysis={tags:Array.isArray(d?.tags)?d.tags:[],flow:d?.flow||"",overlaps:Array.isArray(d?.overlaps)?d.overlaps:[],gaps:Array.isArray(d?.gaps)?d.gaps:[]};
+  }});
+  if($("mT").checked&&jobs.length) chunk(qs,5).forEach((part,i,all)=>tasks.push({label:"직무 조옮김"+(all.length>1?" ("+(i+1)+"/"+all.length+")":""),run:async()=>{
+    const d=await callClaude(`${RULES}\n\n${ctx()}\n작업: 아래 ${base} 면접 질문을 다음 직무로 조옮김하세요: ${jobs.join(", ")}
+- 질문이 확인하려는 역량과 형식은 그대로 유지한다.
+- 해당 직무의 대상자 호칭, 현장, 실제 업무 상황으로 바꾼다.
+질문:\n${listText(part)}\n
+JSON 형식: {"rows":[{"no":번호,"items":[{"job":"직무명","q":"질문"}]}]}`);
+    (Array.isArray(d?.rows)?d.rows:[]).forEach(x=>{if(x&&Array.isArray(x.items)) r.transpose.rows.push({no:+x.no,items:x.items.filter(it=>it&&it.q)});});
+  }}));
+  if($("mL").checked&&levels.length) chunk(qs,5).forEach((part,i,all)=>tasks.push({label:"난이도 사다리"+(all.length>1?" ("+(i+1)+"/"+all.length+")":""),run:async()=>{
+    const d=await callClaude(`${RULES}\n\n${ctx()}\n작업: 각 질문을 같은 역량 축에서 난이도 ${levels.join(", ")} 버전으로 만드세요.
+- 원본 질문의 난이도에 해당하는 칸은 원본 문장을 그대로 쓰고 "orig":true
+질문:\n${listText(part)}\n
+JSON 형식: {"ladders":[{"no":번호,"levels":[{"level":"L1","q":"질문","orig":false}]}]}`);
+    (Array.isArray(d?.ladders)?d.ladders:[]).forEach(x=>{if(x&&Array.isArray(x.levels)) r.ladder.ladders.push({no:+x.no,levels:x.levels.filter(l=>l&&l.q&&/^L[1-5]$/.test(l.level))});});
+  }}));
+  if($("mG").checked) chunk(qs,5).forEach((part,i,all)=>tasks.push({label:"강사용 해설"+(all.length>1?" ("+(i+1)+"/"+all.length+")":""),run:async()=>{
+    const d=await callClaude(`${RULES}\n\n${ctx()}\n작업: 각 질문에 강사용 해설 카드를 만드세요.
+- intent: 출제 의도 한 문장
+- key: 좋은 답변의 흐름을 ① ② ③ 단계로 한 줄
+- mistake: 학생들이 흔히 하는 실수 한 문장
+- followups: 꼬리질문 3개
+질문:\n${listText(part)}\n
+JSON 형식: {"cards":[{"no":번호,"intent":"","key":"","mistake":"","followups":["","",""]}]}`);
+    (Array.isArray(d?.cards)?d.cards:[]).forEach(c=>{if(c) r.guide.cards.push({no:+c.no,intent:c.intent||"",key:c.key||"",mistake:c.mistake||"",followups:Array.isArray(c.followups)?c.followups:[]});});
+  }}));
+  return tasks;
+}
+
+function renderProgress(tasks){
+  const a=$("progressArea"); a.innerHTML="";
+  if(!tasks) return;
+  const LAB={wait:"대기",run:"만드는 중",done:"완료",fail:"건너뜀"};
+  const stop=state.running?h("button",{class:"btn stop",style:"margin-top:10px",onclick:()=>{state.stopAll=true;state.ctl?.abort();}},"생성 멈추기"):null;
+  a.append(h("div",{class:"progress",role:"status","aria-live":"polite"},
+    h("ol",null,tasks.map(t=>h("li",null,t.label,h("span",{class:"st "+t.status},LAB[t.status])))),stop));
+}
+
+async function run(){
+  if(state.running||!apiKey) return;
+  const qs=parseSeed(),base=$("base").value.trim();
+  state.error="";
+  if(!qs.length){state.error="질문 세트가 비어 있어요.";render();return;}
+  if(qs.length>30){state.error="질문은 한 번에 30개까지 가능해요.";render();return;}
+  if(!base){state.error="기준 직무를 입력해 주세요.";render();return;}
+  if(!["mT","mL","mG","mA"].some(id=>$(id).checked)){state.error="결과 구성에서 하나 이상 골라 주세요.";render();return;}
+  if($("mT").checked&&!state.jobs.length){state.error="직무 조옮김을 하려면 인접 직무를 하나 이상 추가해 주세요.";render();return;}
+  if($("mL").checked&&!state.levels.size){state.error="난이도 사다리를 만들려면 난이도를 하나 이상 켜 주세요.";render();return;}
+
+  state.results=emptyResults();state.notice="";
+  state.resultJobs=state.jobs.slice();state.resultBase=base;state.resultQuestions=qs;
+  state.isExample=false;state.running=true;state.stopAll=false;
+  $("runBtn").disabled=true;$("runBtn").textContent="만드는 중…";
+  state.ctl=new AbortController();
+  const tasks=buildTasks(qs,base).map(t=>Object.assign(t,{status:"wait"}));
+  const firstTab=$("mT").checked&&state.jobs.length?"transpose":$("mL").checked?"ladder":$("mG").checked?"guide":"analysis";
+  state.tab=firstTab;render();renderProgress(tasks);
+
+  for(const t of tasks){
+    if(state.stopAll) break;
+    t.status="run";renderProgress(tasks);
+    try{await t.run();t.status="done";}
+    catch(e){
+      t.status="fail";
+      if(e?.name==="AbortError"||e?.code==="cancelled"){state.error="생성을 멈췄어요.";state.stopAll=true;}
+      else{state.error=ERR[e?.code]||"일부 단계를 만들지 못했어요. 잠시 뒤 다시 눌러 주세요.";}
+      if(FATAL.has(e?.code)) state.stopAll=true;
+    }
+    render();renderProgress(tasks);
+  }
+  state.running=false;
+  $("runBtn").disabled=!apiKey;$("runBtn").textContent="파생하기";
+  renderProgress(tasks);
+  if(!state.error) toast("파생을 마쳤어요.");
+}
+
+/* ── 직무로 새 세트 만들기 ── */
+async function generateSet(){
+  if(!apiKey||state.running) return;
+  const job=$("genJob").value.trim();
+  if(!job){toast("직무를 입력해 주세요.");$("genJob").focus();return;}
+  const n=+$("genN").value,post=$("genPost").value.trim().slice(0,3000);
+  const b=$("genBtn");b.disabled=true;b.textContent="만드는 중… (30초 안팎)";
+  state.running=true;$("runBtn").disabled=true;
+  state.ctl=new AbortController();
+  try{
+    const d=await callClaude(`${RULES}\n\n작업: "${job}" 직무 신입 채용 면접의 기본 예상 질문 세트 ${n}개를 만드세요. 면접 대상: ${$("aud").value}
+구성 뼈대 (이 순서를 따르고 문항 수에 맞게 배분):
+공통 도입(1분 자기소개) → 지원 동기 → 직업관 → 경험 → 상황 판단 → 직업윤리·직무지식 → 딜레마 → 입사 후 포부
+- 난이도 L1~L5가 고르게 섞이게 한다.
+${post?"채용공고 정보를 반영해 기관명은 '우리 기관'으로 표현한다:\n"+post+"\n":""}
+JSON 형식: {"questions":["질문1","질문2"],"adjacent":["직무1","직무2","직무3"]}`);
+    const qs=(Array.isArray(d?.questions)?d.questions:[]).filter(x=>typeof x==="string"&&x.trim()).map(x=>x.trim().replace(/^\d+[.)]\s*/,""));
+    if(!qs.length) throw {code:"invalid_json"};
+    const adj=(Array.isArray(d?.adjacent)?d.adjacent:[]).filter(x=>typeof x==="string").slice(0,3);
+    state.jobs=adj.length?adj:[];
+    fillSeed(qs);setMode("paste");
+    startFresh(job,"""+job+"" 기본 세트 "+qs.length+"문항을 만들었어요."+(adj.length?" 인접 직무도 함께 골라 두었어요.":""));
+  }catch(e){
+    if(e?.name!=="AbortError"){state.error=ERR[e?.code]||"세트를 만들지 못했어요. 잠시 뒤 다시 눌러 주세요.";render();}
+  }finally{
+    state.running=false;b.disabled=false;b.textContent="세트 만들기";$("runBtn").disabled=!apiKey;
+  }
+}
+
+/* ── 인접 직무 추천 ── */
+async function suggJobs(){
+  const base=$("base").value.trim();
+  if(!base||!apiKey) return;
+  const b=$("suggBtn");b.disabled=true;b.textContent="추천 받는 중…";
+  const box=$("suggChips");box.innerHTML="";
+  try{
+    const arr=await callClaude(`기준 직무 "${base}"와 면접에서 확인하는 역량이 많이 겹치는 인접 직무 6개를 한국 채용 시장에서 흔히 쓰는 직무명으로 고르세요. JSON 문자열 배열만 출력: ["직무1","직무2"]`);
+    (Array.isArray(arr)?arr:[]).filter(x=>typeof x==="string").slice(0,6).forEach(j=>{
+      box.append(h("button",{class:"sugg",onclick:ev=>{addJob(j);ev.currentTarget.remove();}},"+ "+j));
+    });
+    if(!box.childNodes.length) box.append(h("span",{class:"hint"},"추천 결과가 비어 있어요. 직접 입력해 주세요."));
+  }catch(e){
+    box.append(h("span",{class:"hint"},ERR[e?.code]||"추천을 받지 못했어요. 직접 입력해 주세요."));
+  }finally{b.disabled=false;b.textContent="인접 직무 추천받기";}
+}
+
+/* ── 보관함 (localStorage) ── */
+const VAULT_KEY="moa_qbank_sets";
+function loadSets(){
+  try{const d=localStorage.getItem(VAULT_KEY);state.sets=d?JSON.parse(d):[];}catch(e){state.sets=[];}
+}
+function saveSets(){try{localStorage.setItem(VAULT_KEY,JSON.stringify(state.sets));}catch(e){}}
+function fmtDate(ms){if(!ms) return "";const d=new Date(ms);return (d.getMonth()+1)+"/"+d.getDate();}
+function renderVault(){
+  const box=$("vaultBody");box.innerHTML="";
+  loadSets();
+  const sets=state.sets;
+  if(!state.selId||!sets.find(s=>s.id===state.selId)) state.selId="";
+  const sel=h("select",{"aria-label":"저장된 세트"},
+    h("option",{value:""},sets.length?"저장된 세트 "+sets.length+"개 중 선택":"아직 저장된 세트가 없어요"),
+    sets.map(s=>h("option",{value:s.id,selected:s.id===state.selId},(s.name||"이름 없음")+"  ("+fmtDate(s.updatedAt)+")")));
+  sel.addEventListener("change",()=>{state.selId=sel.value;state.delArm=null;renderVault();});
+  const armed=state.delArm&&state.delArm===state.selId;
+  box.append(h("div",{class:"row"},sel,
+    h("button",{class:"btn ghost sm",disabled:!state.selId,onclick:()=>loadSet(state.selId)},"불러오기"),
+    h("button",{class:"btn ghost sm danger",disabled:!state.selId,onclick:()=>deleteSet(state.selId)},armed?"한 번 더 누르면 삭제":"삭제")));
+  const name=h("input",{type:"text","aria-label":"저장할 세트 이름",placeholder:"세트 이름",value:state.saveName||""});
+  name.addEventListener("input",()=>{state.saveName=name.value;});
+  name.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();saveSet();}});
+  const willOverwrite=state.currentId&&(state.saveName||"").trim()===state.currentName;
+  box.append(h("div",{class:"row",style:"margin-top:8px"},name,h("button",{class:"btn ghost sm",onclick:saveSet},willOverwrite?"덮어쓰기":"저장")));
+  box.append(h("div",{class:"hint"},state.currentId?"지금 열린 세트: "+state.currentName+". 이름을 바꿔 저장하면 새 세트로 보관돼요.":"지금 화면의 질문과 파생 결과를 함께 저장해요."));
+}
+function saveSet(){
+  const qs=parseSeed();
+  if(!qs.length){toast("저장할 질문이 없어요.");return;}
+  const name=(state.saveName||"").trim()||($("base").value.trim()||"질문")+" 세트";
+  const data={
+    id:state.currentId&&name===state.currentName?state.currentId:Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,6),
+    name,baseJob:$("base").value.trim(),audience:$("aud").value,questions:qs,
+    jobs:state.jobs.slice(),levels:[...state.levels].sort(),
+    results:state.results,resultJobs:state.resultJobs,resultBase:state.resultBase,resultQuestions:state.resultQuestions,
+    updatedAt:Date.now()
+  };
+  loadSets();
+  const idx=state.sets.findIndex(s=>s.id===data.id);
+  if(idx>=0) state.sets[idx]=data; else state.sets.unshift(data);
+  if(state.sets.length>50) state.sets=state.sets.slice(0,50);
+  saveSets();
+  state.currentId=data.id;state.currentName=name;state.saveName=name;state.selId=data.id;
+  renderVault();toast("""+name+"" 저장했어요.");
+}
+function loadSet(id){
+  loadSets();
+  const s=state.sets.find(x=>x.id===id);if(!s) return;
+  const qs=Array.isArray(s.questions)?s.questions:[];
+  $("seed").value=qs.map(q=>q.no+". "+q.text).join("\n");showParsed();setMode("paste");
+  $("base").value=s.baseJob||"";
+  if(s.audience) $("aud").value=s.audience;
+  state.jobs=Array.isArray(s.jobs)?s.jobs.slice(0,6):[];
+  state.levels=new Set(Array.isArray(s.levels)&&s.levels.length?s.levels:["L1","L2","L3","L4","L5"]);
+  state.results=Object.assign(emptyResults(),s.results?JSON.parse(JSON.stringify(s.results)):{});
+  state.resultJobs=Array.isArray(s.resultJobs)?s.resultJobs:state.jobs.slice();
+  state.resultBase=s.resultBase||s.baseJob||"";
+  state.resultQuestions=Array.isArray(s.resultQuestions)?s.resultQuestions:qs;
+  state.isExample=false;state.error="";
+  state.currentId=s.id;state.currentName=s.name||"";state.saveName=s.name||"";
+  state.notice="""+(s.name||"세트")+""를 불러왔어요."+(s.results?"":" [파생하기]를 누르면 새로 만들어요.");
+  renderJobs();renderStairs();render();renderVault();
+}
+function deleteSet(id){
+  if(!id) return;
+  if(state.delArm!==id){state.delArm=id;renderVault();clearTimeout(deleteSet._t);deleteSet._t=setTimeout(()=>{state.delArm=null;renderVault();},4000);return;}
+  state.delArm=null;
+  loadSets();
+  state.sets=state.sets.filter(s=>s.id!==id);
+  saveSets();
+  if(state.currentId===id){state.currentId=null;state.currentName="";}
+  state.selId="";toast("삭제했어요.");renderVault();
+}
+
+/* ── 세트 전환 ── */
+function fillSeed(lines){$("seed").value=lines.map((t,i)=>(i+1)+". "+t).join("\n");showParsed();}
+function setMode(m){
+  const gen=m==="gen";
+  $("pastePane").hidden=gen;$("genPane").hidden=!gen;
+  $("segPaste").classList.toggle("on",!gen);$("segGen").classList.toggle("on",gen);
+  $("segPaste").setAttribute("aria-selected",String(!gen));$("segGen").setAttribute("aria-selected",String(gen));
+}
+function startFresh(base,notice){
+  $("base").value=base;
+  state.results=emptyResults();state.isExample=false;state.error="";
+  state.resultQuestions=null;state.resultBase=base;state.resultJobs=state.jobs.slice();
+  state.currentId=null;state.currentName="";state.saveName=base+" 기본";
+  state.notice=notice;state.tab="analysis";
+  renderJobs();render();renderVault();window.scrollTo({top:0,behavior:"smooth"});
+}
+function jobToSet(job){
+  const rows=(state.results.transpose?.rows||[]).slice().sort((a,b)=>a.no-b.no);
+  const qs=rows.map(r=>(r.items||[]).find(x=>x.job===job)).filter(Boolean).map(x=>x.q.trim()).filter(Boolean);
+  if(!qs.length){toast("옮길 질문이 없어요.");return;}
+  const oldBase=state.resultBase;
+  state.jobs=state.jobs.filter(j=>j!==job);
+  if(oldBase&&!state.jobs.includes(oldBase)&&state.jobs.length<6) state.jobs.unshift(oldBase);
+  fillSeed(qs);setMode("paste");
+  startFresh(job,"""+job+"" 질문 "+qs.length+"개를 새 세트로 옮겼어요. 다듬은 뒤 보관함에 저장하거나 [파생하기]를 눌러 주세요.");
+}
+
+/* ── 초기화 ── */
+loadKey();
+$("seed").value=SEED;showParsed();
+$("seed").addEventListener("input",showParsed);
+renderJobs();renderStairs();renderVault();render();
+updateApiUI();
+
+$("saveKeyBtn").addEventListener("click",()=>{
+  const v=$("apiKeyInput").value.trim();
+  if(!v||v.includes("●")){toast("키를 입력해 주세요.");return;}
+  saveKey(v);updateApiUI();toast("API 키를 저장했어요.");
+});
+$("clearKeyBtn").addEventListener("click",()=>{clearKey();$("apiKeyInput").value="";updateApiUI();toast("API 키를 삭제했어요.");});
+$("addJobBtn").addEventListener("click",()=>{addJob($("addJob").value);$("addJob").value="";});
+$("addJob").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();addJob($("addJob").value);$("addJob").value="";}});
+$("runBtn").addEventListener("click",run);
+$("segPaste").addEventListener("click",()=>setMode("paste"));
+$("segGen").addEventListener("click",()=>{setMode("gen");$("genJob").focus();});
+$("genBtn").addEventListener("click",generateSet);
+$("genJob").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();generateSet();}});
+$("suggBtn").addEventListener("click",suggJobs);
+$("copyBtn").addEventListener("click",async()=>{
+  const t=tabText(state.tab);
+  if(!t){toast("복사할 내용이 없어요.");return;}
+  toast(await copyText(t)?"이 탭 내용을 복사했어요.":"복사가 막혀 있어요. 표를 드래그해서 복사해 주세요.");
+});
+$("dlBtn").addEventListener("click",downloadCSV);
+})();
+</script>
+</body>
+</html>
